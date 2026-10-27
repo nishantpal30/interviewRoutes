@@ -1,8 +1,15 @@
 import { StatusCodes } from "http-status-codes";
 
 export const userRegister_Validater = (userDetails) => {
-  const { name, email, password, collegeName, degreeName, gradutionYear } =
-    userDetails;
+  const {
+    name,
+    email,
+    password,
+    collegeName,
+    degreeName,
+    gradutionYear,
+    emailOtp,
+  } = userDetails;
   const requiredFields = {
     name,
     email,
@@ -10,6 +17,7 @@ export const userRegister_Validater = (userDetails) => {
     collegeName,
     degreeName,
     gradutionYear,
+    emailOtp,
   };
 
   const missingFields = Object.entries(requiredFields)
