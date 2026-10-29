@@ -6,9 +6,8 @@ import { normalizedEmail } from "../utils/extra/normailemail.js";
 export const userRegisterOtp_Service = async (email)=>{
     const normalEmail = normalizedEmail(email)
     const emailchecked = inputEmainverify(normalEmail);
-    if(!emailchecked){
+    if(emailchecked){
         return emailchecked
     };
-
-    const getOtp = otpGenerater({email:normalEmail,purpose:"register"});
+  return await otpGenerater({ email: normalEmail, purpose: "register" });
 }

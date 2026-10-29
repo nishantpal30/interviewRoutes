@@ -4,10 +4,10 @@ import bcrypt from "bcryptjs";
 
 export const userRegister_EmailChecker = async (email) => {
   try {
-    const emailChecked = await User.exists(email);
+    const emailChecked = await User.exists({email});
     if (emailChecked) {
       return {
-        success: ture,
+        success:true,
         message: "This email is already exist!!",
         email: email,
         statusCode: StatusCodes.CONFLICT,
@@ -20,10 +20,11 @@ export const userRegister_EmailChecker = async (email) => {
       };
     }
   } catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
+    return {
       message: error.message,
       success: false,
-    });
+      statusCode: StatusCodes.BAD_REQUEST,
+    };
   }
 };
 
@@ -31,6 +32,7 @@ export const userRegister_EmailChecker = async (email) => {
 
 export const userCreateInDB = async (userDetails) => {
   try {
+    // console.log(userDetails)
     const { name, email, password, collegeName, degreeName, gradutionYear } =
       userDetails;
 
@@ -50,10 +52,10 @@ export const userCreateInDB = async (userDetails) => {
       user,
     };
   } catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
+    return {
       message: error.message,
       success: false,
-      statusCode: StatusCodes.BAD_GATEWAY,
-    });
+      statusCode: StatusCodes.BAD_REQUEST,
+    };
   }
 };

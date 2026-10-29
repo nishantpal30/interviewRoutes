@@ -5,16 +5,15 @@ import { StatusCodes } from "http-status-codes";
 
 
 export const verifyOtp = async ({normalEmail,emailOtp, purpose ,consume})=>{
-
-    const inputVerify = verifyOtpInput(normalEmail,emailOtp,purpose);
-
-    if(!inputVerify.success){
+// console.log(normalEmail,emailOtp,purpose,consume)
+const inputVerify = verifyOtpInput(normalEmail,emailOtp,purpose);
+// console.log(inputVerify)
+    if(inputVerify){
         return inputVerify;
     };
-const userDetails = await findUserDetails({normalEmail,emailOtp, purpose ,consume});
- return{
-    userDetails
- }
+return await findUserDetails(normalEmail,emailOtp, purpose ,consume);
+
+//  console.log(userDetails)
 
     
 };

@@ -3,12 +3,14 @@ import { userRegister_EmailChecker } from "../repositories/user.repositories.js"
 import { normalizedEmail } from "../utils/extra/normailemail.js";
 import { userCreateInDB } from "../repositories/user.repositories.js";
 import { verifyOtp } from "../utils/otp/verifyOtp.js";
-
+import { StatusCodes } from "http-status-codes";
 export const userRegister_service = async (userDetails) => {
   try {
     // input validation (all details is filled or not)
     const userRegister_InputValidation = userRegister_Validater(userDetails);
-    if (!userRegister_InputValidation) {
+    // console.log(userDetails)
+    // console.log(userRegister_InputValidation)
+    if (!userRegister_InputValidation.success) {
       return {
         success: userRegister_InputValidation.success,
         message: userRegister_InputValidation.message,
@@ -20,7 +22,7 @@ export const userRegister_service = async (userDetails) => {
     const { email } = userDetails;
     const normalEmail = normalizedEmail(email);
     const emailExists = await userRegister_EmailChecker(normalEmail);
-    if (emailExists) {
+    if (emailExists?.exists === true) {
       return {
         success: false,
         message: emailExists.message,
@@ -30,28 +32,28 @@ export const userRegister_service = async (userDetails) => {
 
     // verify otp
     const { emailOtp } = userDetails;
+    // console.log(normalEmail,emailOtp)
     const otpverification = await verifyOtp({
       normalEmail,
       emailOtp,
       purpose: "register",
       consume: true,
     });
+    console.log(otpverification)
     // create the user in database
-    if (!otpverification) {
+    if (!otpverification.success) {
       return {
         success: otpverification.success,
         message: otpverification.message,
         statusCode: otpverification.statusCode,
       };
     }
-    const createUser = await userCreateInDB(userDetails);
-    return {
-      createUser,
-    };
+    return await userCreateInDB(userDetails);
   } catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
+    return {
       message: error.message,
       success: false,
-    });
+      statusCode: StatusCodes.BAD_REQUEST,
+    };
   }
 };
