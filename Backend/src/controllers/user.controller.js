@@ -47,3 +47,13 @@ export const userRegisterOtp = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+
+export const userLogin = async (req , res)=>{
+  try {
+    const {email,password,otp} = req.body;
+    const loginResponse = await 
+  } catch (error) {
+    
+  }
+}

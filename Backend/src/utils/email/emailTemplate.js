@@ -1,3 +1,5 @@
+import { escapeHtml } from "./escapeHtml.js";
+
 const COPY = {
   register: {
     subject: "Verify your InterviewRoute account",
@@ -7,7 +9,7 @@ const COPY = {
     intro: (name) =>
       `Hi${name ? ` ${name}` : ""}, thanks for signing up for InterviewRoute! Use the code below to activate your account and start practicing interviews.`,
     ctaLabel: "Activate my account",
-    ctaUrl: "https://interviewroute.com/verify",
+    ctaUrl: "https://interviewroute/verify",
     footerNote:
       "You're receiving this because you created a new InterviewRoute account.",
   },
@@ -19,7 +21,7 @@ const COPY = {
     intro: (name) =>
       `Hi${name ? ` ${name}` : ""}, we noticed a login attempt on your InterviewRoute account. Enter the code below to continue. If this wasn't you, you can safely ignore this email.`,
     ctaLabel: "Continue to dashboard",
-    ctaUrl: "https://interviewroute.com/login/verify",
+    ctaUrl: "https://interviewroute/login/verify",
     footerNote:
       "For your security, this code expires shortly and can only be used once.",
   },
@@ -31,7 +33,7 @@ const COPY = {
     intro: (name) =>
       `Hi${name ? ` ${name}` : ""}, we received a request to reset the password for your InterviewRoute account. Use the code below to set a new password. Didn't request this? No action needed — your password stays unchanged.`,
     ctaLabel: "Reset my password",
-    ctaUrl: "https://interviewroute.com/reset-password",
+    ctaUrl: "https://interviewroute/reset-password",
     footerNote:
       "If you did not request a password reset, please contact support immediately.",
   },
@@ -42,37 +44,49 @@ const DEFAULTS = {
   expiryMinutes: 10,
   supportEmail: "interviewroute@gmail.com",
   companyName: "InterviewRoute",
-  companyUrl: "https://interviewroute.com",
-  year: new Date().getFullYear(),
+  companyUrl: "https://interviewroute",
 };
 
-// Subject
+
 export const emailSubject = (type) =>
   COPY[type]?.subject ?? `${DEFAULTS.companyName} Notification`;
 
-//  Intro (plain-text heading, for previews / notifications)
+
+
 export const emailIntro = (type) =>
   COPY[type]?.title ?? `Welcome to ${DEFAULTS.companyName}`;
 
-// Full HTML body 
+// Plain-text version for sendMail({ text })
+export const emailText = (type, options = {}) => {
+  const cfg = COPY[type];
+  if (!cfg) throw new Error(`Unknown email type: ${type}`);
+  const { otp, expiryMinutes } = { ...DEFAULTS, ...options };
+  if (!otp) throw new Error("emailText requires an `otp` value");
+  return `${cfg.title}\n\nYour one-time code: ${otp}\nThis code expires in ${expiryMinutes} minutes.\n\n${cfg.ctaUrl}\n\n${cfg.footerNote}`;
+};
+
+// Full HTML body
 export const emailBody = (type, options = {}) => {
   const cfg = COPY[type];
   if (!cfg) throw new Error(`Unknown email type: ${type}`);
 
-  const {
-    name,
-    otp,
-    expiryMinutes,
-    supportEmail,
-    companyName,
-    companyUrl,
-    year,
-  } = {
+  const merged = {
     ...DEFAULTS,
+    year: new Date().getFullYear(),
     ...options,
   };
+  if (!merged.otp) throw new Error("emailBody requires an `otp` value");
 
-  if (!otp) throw new Error("emailBody requires an `otp` value");
+  // Escape every dynamic value once
+  const name = escapeHtml(merged.name);
+  const otp = escapeHtml(merged.otp);
+  const expiryMinutes = escapeHtml(merged.expiryMinutes);
+  const supportEmail = escapeHtml(merged.supportEmail);
+  const companyName = escapeHtml(merged.companyName);
+  const companyUrl = escapeHtml(merged.companyUrl);
+  const year = escapeHtml(merged.year);
+  const ctaUrl = escapeHtml(cfg.ctaUrl);
+  const subject = escapeHtml(cfg.subject);
 
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -80,7 +94,7 @@ export const emailBody = (type, options = {}) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>${cfg.subject}</title>
+  <title>${subject}</title>
   <!--[if mso]>
   <style>body,table,td{font-family:Arial,sans-serif!important;}</style>
   <![endif]-->
@@ -116,7 +130,7 @@ export const emailBody = (type, options = {}) => {
               <!-- Gradient bar -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="height:6px;background:linear-gradient(90deg,#4f46e5 0%,#7c3aed 50%,#ec4899 100%);font-size:0;line-height:0;">&nbsp;</td>
+                  <td style="height:6px;background-color:#7c3aed;background:linear-gradient(90deg,#4f46e5 0%,#7c3aed 50%,#ec4899 100%);font-size:0;line-height:0;">&nbsp;</td>
                 </tr>
               </table>
 
@@ -155,7 +169,7 @@ export const emailBody = (type, options = {}) => {
                       </tr>
                       <tr>
                         <td align="center">
-                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#eef2ff 0%,#faf5ff 100%);border:1px dashed #c7d2fe;border-radius:14px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f0ff;background:linear-gradient(135deg,#eef2ff 0%,#faf5ff 100%);border:1px dashed #c7d2fe;border-radius:14px;">
                             <tr>
                               <td style="padding:18px 32px;">
                                 <span style="font-family:'Courier New',Courier,monospace;font-size:34px;font-weight:700;letter-spacing:12px;color:#312e81;padding-left:12px;">
@@ -181,8 +195,8 @@ export const emailBody = (type, options = {}) => {
                         <td align="center" style="padding:28px 0 8px 0;">
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                              <td align="center" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);border-radius:10px;">
-                                <a href="${cfg.ctaUrl}" target="_blank"
+                              <td align="center" style="background-color:#4f46e5;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);border-radius:10px;">
+                                <a href="${ctaUrl}" target="_blank"
                                    style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.2px;">
                                   ${cfg.ctaLabel}
                                 </a>
@@ -196,7 +210,7 @@ export const emailBody = (type, options = {}) => {
                     <!-- Fallback link -->
                     <p style="margin:20px 0 0 0;font-size:12px;line-height:1.6;color:#9ca3af;text-align:center;word-break:break-all;">
                       Button not working? Copy and paste this link into your browser:<br />
-                      <a href="${cfg.ctaUrl}" style="color:#4f46e5;text-decoration:none;">${cfg.ctaUrl}</a>
+                      <a href="${ctaUrl}" style="color:#4f46e5;text-decoration:none;">${ctaUrl}</a>
                     </p>
 
                     <!-- Divider -->

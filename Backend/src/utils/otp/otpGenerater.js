@@ -21,7 +21,7 @@ export const otpGenerater = async ({ email, purpose }) => {
   const otpCodeHash = await bcrypt.hash(otpCode, 10);
   const otpExpriesAt = new Date(Date.now() + OTP_TIME * 60 * 1000);
   await otpSave_DB({email,purpose,otpCodeHash,otpExpriesAt});
-
+// console.log(otpCode,otpCodeHash,otpExpriesAt)
 //   now send notification
 return await emailNotificationTemplete({ email, purpose, otp: otpCode });
 };

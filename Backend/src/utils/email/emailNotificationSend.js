@@ -1,43 +1,83 @@
 import { StatusCodes } from "http-status-codes";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Created once and reused for every email
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Gmail App Password
+  },
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 15_000,
+});
+
+const isFullHtmlDocument = (html = "") => /^\s*<!doctype html/i.test(html);
 
 export const emailNotificationSend = async ({
   email,
   intro,
   subject,
   emailContent,
+  text,
 }) => {
   try {
-    const html = intro ? `<p>${intro}</p>${emailContent}` : emailContent;
-
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || "InterviewRoute <onboarding@resend.dev>",
-      to: email,
-      subject,
-      html,
-    });
-
-    // Resend returns { error } instead of throwing — handle it explicitly
-    if (error) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       return {
         success: false,
-        message: `Resend failed: ${error.message}`,
-        statusCode: StatusCodes.BAD_GATEWAY, // upstream service failed
+        message:
+          "Email service is not configured (EMAIL_USER / EMAIL_PASS missing)",
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
         data: null,
       };
     }
 
-    // Success
+    if (!email || !subject || !emailContent) {
+      return {
+        success: false,
+        message: "email, subject and emailContent are required",
+        statusCode: StatusCodes.BAD_REQUEST,
+        data: null,
+      };
+    }
+
+    const html =
+      intro && !isFullHtmlDocument(emailContent)
+        ? `<p>${intro}</p>${emailContent}`
+        : emailContent;
+
+    const info = await transporter.sendMail({
+      from:
+        process.env.EMAIL_FROM ||
+        `"InterviewRoute" <${process.env.EMAIL_USER}>`,
+      replyTo: process.env.SUPPORT_EMAIL || process.env.EMAIL_USER,
+      to: email,
+      subject: subject,
+      text: text,
+      html: html,
+    });
+
+    // Nodemailer reports rejected recipients instead of throwing
+    if (info.rejected && info.rejected.length > 0) {
+      return {
+        success: false,
+        message: `Email rejected for: ${info.rejected.join(", ")}`,
+        statusCode: StatusCodes.BAD_GATEWAY,
+        data: null,
+      };
+    }
+
     return {
       success: true,
       message: `Email sent successfully to ${email}`,
       statusCode: StatusCodes.OK,
-      data,
+      data: { messageId: info.messageId, accepted: info.accepted },
     };
   } catch (err) {
-    // Catch anything unexpected (network, bad API key, JSON parse, etc.)
+    // Auth failure, network/timeouts, bad config, etc.
     return {
       success: false,
       message: err?.message || "Something went wrong while sending email",
