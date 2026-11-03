@@ -5,6 +5,8 @@ import { getMeService } from "../services/user/userlogin.service.js";
 import { StatusCodes } from "http-status-codes";
 import { validateUpdateProfile } from "../validators/userValidator/profile.validator.ts";
 import { updateProfileService } from "../services/user/userProfileUpdate.service.js";
+import { passwordValidate, resetPasswordValidation } from "../validators/userValidator/userRegister.validator.ts";
+import { passwordUpdatingService, resetPasswordService } from "../services/user/resetPassword.service.js";
 const cookieOptions = {
   httpOnly: true,
   sameSite: "lax",
@@ -98,3 +100,54 @@ export const updateProfile = async (req, res) => {
     return serverError(res, error);
   }
 };
+
+// password reset section
+export const resetPassword = async(req , res)=>{
+  try {
+    const {email} = req.body
+    const validation = resetPasswordValidation({email});
+     if (!validation.success) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: validation.message,
+      });
+    }
+    const resetResponse = await resetPasswordService({email})
+    return res.status(resetResponse.statusCode).json(resetResponse)
+  } catch (error) {
+    console.error("ResetPassword Email check error:", error);
+    return serverError(res, error);
+  }
+  }
+
+// verify otp for reset password and update
+
+export const resetPasswordInDb = async(req,res)=>{
+  try {
+    const {email,emailOtp,password}=req.body;
+     const validation = resetPasswordValidation(email);
+     if (!validation.success) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: validation.message,
+      });
+    }
+    const passwordValidation = passwordValidate(password);
+        if (!passwordValidation.success) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: validation.message,
+      });
+    }
+
+const result = await passwordUpdatingService({email,emailOtp,password})
+
+return res.status(StatusCodes.statusCode).json(result);
+  } catch (error) {
+    console.error("ResetPassword new error:", error);
+    return serverError(res, error);
+  }
+  }

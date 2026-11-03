@@ -1,9 +1,15 @@
-import { z } from "zod";
+import { email, z } from "zod";
 import { StatusCodes } from "http-status-codes";
 import { emailSchema, passwordSchema } from "../../dto/common.dto/common.dto.ts";
 
 const currentYear = new Date().getFullYear();
 
+const resetemailSchema = z.object({
+  email:emailSchema
+})
+const resetPasswordSchema = z.object({
+  password:passwordSchema
+})
 const userRegisterSchema = z.object({
   name: z
     .string({ message: "Name is required" })
@@ -60,3 +66,42 @@ export const validateUserRegister = (body: unknown): ValidationResult => {
 
   return { success: true, data: result.data };
 };
+
+
+export const resetPasswordValidation =(body:unknown)=>{
+  const result =  resetemailSchema.safeParse(body);
+  if (!result.success) {
+    const errors = result.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+
+    return {
+      success: false,
+      statusCode: StatusCodes.BAD_REQUEST,
+      message: errors.map((e) => e.message).join(", "),
+      errors, 
+    };
+  }
+
+  return { success: true, data: result.data };
+}
+
+export const passwordValidate =(password:unknown)=>{
+  const result =  resetPasswordSchema.safeParse(password);
+  if (!result.success) {
+    const errors = result.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+
+    return {
+      success: false,
+      statusCode: StatusCodes.BAD_REQUEST,
+      message: errors.map((e) => e.message).join(", "),
+      errors, 
+    };
+  }
+
+  return { success: true, data: result.data };
+}

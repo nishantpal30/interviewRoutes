@@ -12,7 +12,7 @@ const inputVerify = verifyOtpInput(normalEmail,emailOtp,purpose);
         return inputVerify;
     };
 const data = await findUserDetails(normalEmail,emailOtp, purpose ,consume);
-console.log(data)
+// console.log(data)
 return data;
 
 //  console.log(userDetails)

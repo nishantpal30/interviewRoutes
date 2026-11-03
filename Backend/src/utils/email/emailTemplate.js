@@ -25,7 +25,7 @@ const COPY = {
     footerNote:
       "For your security, this code expires shortly and can only be used once.",
   },
-  resetPassword: {
+ resetPassword : {
     subject: "Reset your InterviewRoute password",
     preheader: "A password reset was requested for your account.",
     badge: "🔑 Password reset",
