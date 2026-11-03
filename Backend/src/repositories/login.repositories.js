@@ -17,10 +17,10 @@ export const loginUserChecker = async ({ email, password }) => {
   }
 
   const token = jwt.sign(
-    { _id: user._id},
-    process.env.JWT_SECRET_KEY,
-    { expiresIn: "1d" }
-  );
+  { userId: user._id },
+  process.env.JWT_SECRET_KEY,
+  { expiresIn: "1d" }
+);
 
   return {
     success: true,

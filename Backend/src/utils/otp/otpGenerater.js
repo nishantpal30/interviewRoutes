@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
-import { inputEmainverify } from "../../validators/emailValidator/verifyOtp.validator.js";
+import { inputEmailverify } from "../../validators/emailValidator/verifyOtp.validator.ts";
 import { otpSave_DB } from "../../repositories/otp.repositries.js";
 import { emailNotificationTemplete } from "../email/emailNotificationTemplete.js";
 const OTP_TIME = 10;
@@ -10,7 +10,7 @@ const otpGet = () => {
 };
 
 export const otpGenerater = async ({ email, purpose }) => {
-  const inputChecked = inputEmainverify(email);
+  const inputChecked = inputEmailverify(email);
   if (inputChecked) {
     return {
       inputChecked,

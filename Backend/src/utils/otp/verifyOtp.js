@@ -1,6 +1,6 @@
-import { verifyOtpInput } from "../../validators/emailValidator/verifyOtp.validator.js";
+import { verifyOtpInput } from "../../validators/emailValidator/verifyOtp.validator.ts";
 import { findUserDetails } from "../../repositories/email.repositories.js";
-import { StatusCodes } from "http-status-codes";
+
 
 
 
@@ -11,7 +11,9 @@ const inputVerify = verifyOtpInput(normalEmail,emailOtp,purpose);
     if(inputVerify){
         return inputVerify;
     };
-return await findUserDetails(normalEmail,emailOtp, purpose ,consume);
+const data = await findUserDetails(normalEmail,emailOtp, purpose ,consume);
+console.log(data)
+return data;
 
 //  console.log(userDetails)
 

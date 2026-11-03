@@ -1,9 +1,10 @@
-import { userRegister_service } from "../services/user.register.service.js";
-import { userRegisterOtp_Service } from "../services/userRegisterOtp.service.js";
-import { loginService } from "../services/userlogin.service.js";
-import { getMeService } from "../services/getMe.service.js"; 
+import { userRegister_service } from "../services/user/user.register.service.js";
+import { userRegisterOtp_Service } from "../services/user/userRegisterOtp.service.js";
+import { loginService } from "../services/user/userlogin.service.js";
+import { getMeService } from "../services/user/userlogin.service.js";
 import { StatusCodes } from "http-status-codes";
-
+import { validateUpdateProfile } from "../validators/userValidator/profile.validator.ts";
+import { updateProfileService } from "../services/user/userProfileUpdate.service.js";
 const cookieOptions = {
   httpOnly: true,
   sameSite: "lax",
@@ -16,13 +17,14 @@ const serverError = (res, error) =>
     statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     message: error?.message || "Internal server error",
   });
-
+// User register controller
 export const userRegister = async (req, res) => {
   try {
     const { name, email, password, collegeName, degreeName, gradutionYear, emailOtp } = req.body;
     const response = await userRegister_service({
       name, email, password, collegeName, degreeName, gradutionYear, emailOtp,
     });
+    
     return res.status(response.statusCode).json(response);
   } catch (error) {
     console.error("userRegister error:", error);
@@ -52,7 +54,7 @@ export const userLogin = async (req, res) => {
       });
     }
 
-    return res.status(response.statusCode).json(response); // token not in body
+    return res.status(response.statusCode).json(response); 
   } catch (error) {
     return serverError(res, error);
   }
@@ -71,6 +73,28 @@ export const getMe = async (req, res) => {
     const response = await getMeService(req.userId);
     return res.status(response.statusCode).json(response);
   } catch (error) {
+    return serverError(res, error);
+  }
+};
+
+
+
+export const updateProfile = async (req, res) => {
+  try {
+    const validation = validateUpdateProfile(req.body);
+
+    if (!validation.success) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: validation.message,
+      });
+    }
+
+    const response = await updateProfileService(req.userId, validation.data);
+    return res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error("updateProfile error:", error);
     return serverError(res, error);
   }
 };

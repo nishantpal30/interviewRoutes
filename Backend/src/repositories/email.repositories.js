@@ -34,7 +34,8 @@ export const findUserDetails = async (
         statusCode: StatusCodes.CONFLICT,
       };
     }
-    const isMatch = await bcrypt.compare(String(emailOtp), details.codeHash);
+    const isMatch = await bcrypt.compare(String(emailOtp), details.otpCodeHash);
+    // console.log(isMatch)
     if (!isMatch) {
       details.attempts += 1;
       await details.save();
