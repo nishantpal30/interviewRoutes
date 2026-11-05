@@ -1,4 +1,4 @@
-import { email, z } from "zod";
+import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
 import { emailSchema, passwordSchema } from "../../dto/common.dto/common.dto.ts";
 
@@ -7,9 +7,7 @@ const currentYear = new Date().getFullYear();
 const resetemailSchema = z.object({
   email:emailSchema
 })
-const resetPasswordSchema = z.object({
-  password:passwordSchema
-})
+const resetPasswordSchema = passwordSchema;
 const userRegisterSchema = z.object({
   name: z
     .string({ message: "Name is required" })

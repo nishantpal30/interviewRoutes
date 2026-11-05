@@ -1,67 +1,35 @@
-# 🚀 JS Backend Starter
+# InterviewRoute Backend
 
-A simple and reusable **Node.js backend starter template** to quickly start new backend projects.
+## Setup
 
-## 🛠️ Getting Started
-
-### 1. Clone the repository
-
-Open the terminal inside the folder where you want to create your project and run:
+From the repository root, enter the backend folder and install its dependencies:
 
 ```bash
-git clone https://github.com/nishantpal30/js-backend-starter.git .
-```
-
-> The `.` at the end clones the repository directly into the current folder.
-
-### 2. Install dependencies
-
-```bash
+cd Backend
 npm install
 ```
 
-### 3. Create a `.env` file
+Create a `.env` file in this folder and set the variables below:
 
-Create a `.env` file in the root directory and add your environment variables:
+The backend reads these environment variables:
 
-```env
-PORT=3000
-DATABASE_URL=your_database_url
-JWT_SECRET=your_jwt_secret
-```
-## 🧹 Remove `.gitkeep` Files (Optional)
+- `PORT` (optional; defaults to `3001`)
+- `DATABASE_URI` (required MongoDB connection string)
+- `JWT_SECRET_KEY` (required secret used to sign and verify login tokens)
+- `EMAIL_USER` and `EMAIL_PASS` (required to send email verification and
+  password reset codes; for Gmail, use an app password)
+- `EMAIL_FROM` and `SUPPORT_EMAIL` (optional email sender and reply address)
 
-This starter repository uses `.gitkeep` files to preserve the folder structure.
-
-After cloning the repository, you can remove all `.gitkeep` files by running:
-
-```bash
-find . -type f -name ".gitkeep" -delete
-```
-
-> Run this command from the root directory of the project.
-
-### 4. Start the project
+Start the development server with:
 
 ```bash
 npm run dev
 ```
 
----
+Start it without the file watcher with:
 
-## 📂 Project Structure
-
-```text
-project/
-├── src/
-├── .env
-├── .gitignore
-├── package.json
-└── README.md
+```bash
+npm start
 ```
 
-## 🚀 Start Building
-
-Your backend starter project is now ready. Customize it according to your project requirements and start building!
-
-⭐ If you find this starter useful, consider giving the repository a star.
+The authentication API is available under `/api/auth`.

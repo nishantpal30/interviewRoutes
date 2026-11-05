@@ -29,7 +29,11 @@ export const userRegister_service = async (userDetails) => {
     const normalEmail = normalizedEmail(email);
     const emailExists = await userRegister_EmailChecker(normalEmail);
 
-    if (emailExists?.exists === true) {
+    if (!emailExists.success) {
+      return emailExists;
+    }
+
+    if (emailExists.exists) {
       return {
         success: false,
         message: emailExists.message,

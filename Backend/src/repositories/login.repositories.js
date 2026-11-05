@@ -31,5 +31,5 @@ export const loginUserChecker = async ({ email, password }) => {
 };
 
 export const getMe = async (userId)=>{
-return await User.findById(userId);
+ return await User.findById(userId).select("-password");
 }

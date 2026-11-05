@@ -113,7 +113,7 @@ export const resetPassword = async(req , res)=>{
         message: validation.message,
       });
     }
-    const resetResponse = await resetPasswordService({email})
+    const resetResponse = await resetPasswordService(validation.data.email)
     return res.status(resetResponse.statusCode).json(resetResponse)
   } catch (error) {
     console.error("ResetPassword Email check error:", error);
@@ -126,7 +126,7 @@ export const resetPassword = async(req , res)=>{
 export const resetPasswordInDb = async(req,res)=>{
   try {
     const {email,emailOtp,password}=req.body;
-     const validation = resetPasswordValidation(email);
+     const validation = resetPasswordValidation({ email });
      if (!validation.success) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
@@ -139,13 +139,17 @@ export const resetPasswordInDb = async(req,res)=>{
       return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         statusCode: StatusCodes.BAD_REQUEST,
-        message: validation.message,
+        message: passwordValidation.message,
       });
     }
 
-const result = await passwordUpdatingService({email,emailOtp,password})
+const result = await passwordUpdatingService({
+  email: validation.data.email,
+  emailOtp,
+  password: passwordValidation.data,
+})
 
-return res.status(StatusCodes.statusCode).json(result);
+return res.status(result.statusCode).json(result);
   } catch (error) {
     console.error("ResetPassword new error:", error);
     return serverError(res, error);
