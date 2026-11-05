@@ -5,25 +5,17 @@ import bcrypt from "bcryptjs";
 export const userRegister_EmailChecker = async (email) => {
   try {
     const emailChecked = await User.exists({email});
-    if (emailChecked) {
-      return {
-        success:true,
-        message: "This email is already exist!!",
-        email: email,
-        statusCode: StatusCodes.CONFLICT,
-      };
-    } else {
-      return {
-        success: false,
-        message: "Email is new!!",
-        statusCode: StatusCodes.OK,
-      };
-    }
+    return {
+      success: true,
+      exists: Boolean(emailChecked),
+      message: emailChecked ? "This email already exists" : "Email is available",
+      statusCode: emailChecked ? StatusCodes.CONFLICT : StatusCodes.OK,
+    };
   } catch (error) {
     return {
-      message: error.message,
       success: false,
-      statusCode: StatusCodes.BAD_REQUEST,
+      message: "Unable to check whether this email is available",
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };
@@ -45,17 +37,26 @@ export const userCreateInDB = async (userDetails) => {
       degreeName,
       gradutionYear,
     });
+    const safeUser = user.toObject();
+    delete safeUser.password;
     return {
       success: true,
-      message: "User registration sucess !!",
+      message: "User registration successful",
       statusCode: StatusCodes.CREATED,
-      user,
+      user: safeUser,
     };
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.email) {
+      return {
+        success: false,
+        message: "This email already exists",
+        statusCode: StatusCodes.CONFLICT,
+      };
+    }
     return {
-      message: error.message,
       success: false,
-      statusCode: StatusCodes.BAD_REQUEST,
+      message: "Unable to create user",
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };

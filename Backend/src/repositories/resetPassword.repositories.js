@@ -1,21 +1,21 @@
 
 import User from "../db/models/user.js";
 import { StatusCodes } from "http-status-codes";
+import bcrypt from "bcryptjs";
 import { normalizedEmail } from "../utils/extra/normailemail.js";
 
 
 export const restPasswordDb = async ({email})=>{
-    const normalEmail = normalizedEmail({email})
-    const user = await User.findOne({email:normalEmail})
+    const normalEmail = normalizedEmail(email)
+    const user = await User.exists({email:normalEmail})
     if(!user){
         return{
             success:false,
             message:"User does not exist with this email!!",
-            statusCode:StatusCodes.BAD_REQUEST
+            statusCode:StatusCodes.NOT_FOUND
         }
     }
 return{
-    user,
     success:true,
     message:"User exist",
     statusCode:StatusCodes.OK
@@ -24,9 +24,11 @@ return{
 }
 
 export const newPassword = async({email,password})=>{
+    const normalEmail = normalizedEmail(email);
+    const hashedPassword = await bcrypt.hash(password, 10);
     return await User.findOneAndUpdate(
-        {email:email},
-        {$set:{password:password}},
+        {email:normalEmail},
+        {$set:{password:hashedPassword}},
          { returnDocument: "after", runValidators: true }
     ).select("-password");
 

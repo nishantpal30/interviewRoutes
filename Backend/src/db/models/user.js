@@ -3,20 +3,20 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
    name :{
     type:String,
-    require:true,
+    required:true,
     trim:true
    },
    email:{
     type:String,
-    require:true,
+    required:true,
     unique:true,
     trim:true,
     lowercase:true
    },
    password:{
     type:String,
-    require:true,
-    unique:true,
+    required:true,
+    select:false,
     minlength:8
    },
    collegeName:{
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
     type:String,
     default:"user-default-profile.png"
    }
-},{timeseries:true})
+})
 
 const User = mongoose.model("User",userSchema);
 export default User;

@@ -11,12 +11,16 @@ export const findUserDetails = async (
 ) => {
   try {
     // console.log(normalEmail,emailOtp,purpose,consume)
-    const details = await EmailOtp.findOne({ email: normalEmail, purpose });
+    const details = await EmailOtp.findOne({
+      email: normalEmail,
+      purpose,
+      expiresAt: { $gt: new Date() },
+    });
     // console.log(details)
     if (!details) {
       return {
         success: false,
-        message: "Otp is not generated on this email!!",
+        message: "OTP is missing or expired",
         statusCode: StatusCodes.NOT_FOUND,
       };
     }
