@@ -2,7 +2,10 @@ import { StatusCodes } from "http-status-codes";
 import Problem from "../../db/models/problem/problem.js";
 
 export const existingProblem = async (problemQuery) => {
-  const problem = await Problem.findOne(problemQuery);
+  const problem = await Problem.findOne({
+    ...problemQuery,
+    isDeleted: { $ne: true },
+  });
 
   if (!problem) {
     return {
