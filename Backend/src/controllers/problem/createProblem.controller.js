@@ -9,10 +9,14 @@ export const createProblem = async (req, res) => {
       return res.status(eligibleCheck.statusCode).json(eligibleCheck);
     }
 
-    const { submissionType, problemId, content } = req.body ?? {};
+    const isUpdate = req.params?.slug !== undefined;
+    const submissionType = isUpdate ? "update" : "create";
+    const problemSlug = isUpdate ? req.params.slug : null;
+    const { content } = req.body ?? {};
+
     const response = await problemCreationService(
       submissionType,
-      problemId,
+      problemSlug,
       content,
       eligibleCheck.userId,
       eligibleCheck.isAdmin,
