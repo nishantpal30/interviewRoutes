@@ -8,10 +8,9 @@ const problemRouter = express.Router();
 problemRouter.post("/create-problem", isAuthenticated, createProblem);
 
 problemRouter.patch(
-  "/create-problem/update/:problemId",
+  "/create-problem/update/:slug",
   isAuthenticated,
   createProblem,
 );
-
 
 export default problemRouter;
