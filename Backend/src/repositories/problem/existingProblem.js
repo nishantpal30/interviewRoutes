@@ -14,8 +14,5 @@ export const existingProblem = async (problemQuery)=>{
         };
       }
 
-      return {
-        success: true,
-        statusCode: StatusCodes.OK,
-      };
+      
     }
