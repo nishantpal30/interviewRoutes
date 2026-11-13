@@ -22,7 +22,7 @@ const serverError = (res, error) =>
 // User register controller
 export const userRegister = async (req, res) => {
   try {
-    const { name, email, password, collegeName, degreeName, gradutionYear, emailOtp } = req.body;
+    const { name, email, password, collegeName, degreeName, gradutionYear, emailOtp } = req.body ?? {};
     const response = await userRegister_service({
       name, email, password, collegeName, degreeName, gradutionYear, emailOtp,
     });
@@ -36,7 +36,7 @@ export const userRegister = async (req, res) => {
 
 export const userRegisterOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.body ?? {};
     const response = await userRegisterOtp_Service(email);
     return res.status(response.statusCode).json(response);
   } catch (error) {
@@ -46,7 +46,7 @@ export const userRegisterOtp = async (req, res) => {
 
 export const userLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
     const { token, ...response } = await loginService({ email, password });
 
     if (response.success && token) {
@@ -104,7 +104,7 @@ export const updateProfile = async (req, res) => {
 // password reset section
 export const resetPassword = async(req , res)=>{
   try {
-    const {email} = req.body
+    const {email} = req.body ?? {}
     const validation = resetPasswordValidation({email});
      if (!validation.success) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -125,7 +125,7 @@ export const resetPassword = async(req , res)=>{
 
 export const resetPasswordInDb = async(req,res)=>{
   try {
-    const {email,emailOtp,password}=req.body;
+    const {email,emailOtp,password}=req.body ?? {};
      const validation = resetPasswordValidation({ email });
      if (!validation.success) {
       return res.status(StatusCodes.BAD_REQUEST).json({
