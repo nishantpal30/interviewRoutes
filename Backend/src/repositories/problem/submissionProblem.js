@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import CreateProblemSubmission from "../../db/models/problem/createProblemSubmission.js";
+import CreateProblemSubmission from "../../db/models/problem/CreateProblemSubmission.js";
 
 export const submissionProblem = async (
   submissionType,

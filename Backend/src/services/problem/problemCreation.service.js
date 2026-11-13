@@ -7,7 +7,7 @@ import { submissionProblem } from "../../repositories/problem/submissionProblem.
 
 export const problemCreationService = async (
   submissionType,
-  problemId,
+  problemSlug,
   content,
   userId,
   isAdmin,
@@ -60,17 +60,18 @@ if (!validation.success) {
 }
 
 const validContent = validation.data;
+    let problemId = null;
 
     if (submissionType === "update") {
-      if (!problemId) {
+      if (!problemSlug) {
         return {
           success: false,
           statusCode: StatusCodes.BAD_REQUEST,
-          message: "problemId is required for an update.",
+          message: "Problem slug is required for an update.",
         };
       }
       const problemQuery = {
-        _id: problemId,
+        slug: problemSlug,
         isPublished: true,
       };
       if (!isAdmin) {
@@ -81,6 +82,8 @@ const validContent = validation.data;
       if (!existingProblemCheck.success) {
         return existingProblemCheck;
       }
+
+      problemId = existingProblemCheck.problem._id;
     }
 
     return await submissionProblem(
