@@ -1,0 +1,16 @@
+import { StatusCodes } from "http-status-codes";
+import Problem from "../../db/models/problem/problem.js"
+
+
+
+export const existingProblem = async (problemQuery)=>{
+    const existingProblems = await Problem.findOne(problemQuery);
+
+      if (!existingProblem) {
+        return{
+          success: false,
+          message: "Live problem not found or you cannot edit it.",
+          statusCode:StatusCodes.BAD_REQUEST
+        };
+      }
+    }
