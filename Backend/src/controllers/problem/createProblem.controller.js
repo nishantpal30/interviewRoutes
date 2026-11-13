@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { eligibleChecker } from "../../repositories/problem/eligibleChecker.js";
 import { problemCreationService } from "../../services/problem/problemCreation.service.js";
+import { createrAllProblemService } from "../../services/problem/createrAllProblem.service.js";
 
 export const createProblem = async (req, res) => {
   try {
@@ -31,6 +32,23 @@ export const createProblem = async (req, res) => {
       success: false,
       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
       message: "Unable to submit the problem.",
+    });
+  }
+};
+
+export const createrAllProblem = async (req, res) => {
+  try {
+    const response = await createrAllProblemService(req.userId);
+
+    return res.status(response.statusCode).json({
+      success: response.success,
+      message: response.message,
+      data: response.data,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };

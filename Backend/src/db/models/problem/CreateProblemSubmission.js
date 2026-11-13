@@ -139,12 +139,27 @@ const problemSubmissionSchema = new Schema(
       type: String,
       default: "",
     },
+
+    // Soft delete
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
 
 problemSubmissionSchema.index({ reviewStatus: 1, createdAt: 1 });
 problemSubmissionSchema.index({ problemId: 1, reviewStatus: 1 });
+problemSubmissionSchema.index({
+  creatorPartnerId: 1,
+  isDeleted: 1,
+  createdAt: -1,
+});
 
 const CreateProblemSubmission = mongoose.model(
   "CreateProblemSubmission",
