@@ -6,6 +6,12 @@ import { createProblem } from "../controllers/problem/createProblem.controller.j
 const problemRouter = express.Router();
 
 problemRouter.post("/create-problem", isAuthenticated, createProblem);
-problemRouter.patch("/update-problem/:id",isAuthenticated,createProblem);
+
+problemRouter.patch(
+  "/create-problem/update/:problemId",
+  isAuthenticated,
+  createProblem,
+);
+
 
 export default problemRouter;

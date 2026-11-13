@@ -5,11 +5,16 @@ import { problemCreationService } from "../../services/problem/problemCreation.s
 export const createProblem = async (req, res) => {
   try {
     const eligibleCheck = await eligibleChecker(req.userId);
+
     if (!eligibleCheck.success) {
       return res.status(eligibleCheck.statusCode).json(eligibleCheck);
     }
 
-    const { submissionType, problemId, content } = req.body ?? {};
+    const isUpdate = req.params?.problemId !== undefined;
+    const submissionType = isUpdate ? "update" : "create";
+    const problemId = isUpdate ? req.params.problemId : null;
+    const { content } = req.body ?? {};
+
     const response = await problemCreationService(
       submissionType,
       problemId,
@@ -21,6 +26,7 @@ export const createProblem = async (req, res) => {
     return res.status(response.statusCode).json(response);
   } catch (error) {
     console.error("createProblem controller error:", error);
+
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
