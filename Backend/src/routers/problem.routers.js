@@ -19,6 +19,7 @@ problemRouter.patch("/create-problem/update/:slug",isAuthenticated,createProblem
 // problem read for creater dashboard
 problemRouter.get("/my-problem", isAuthenticated, createrAllProblem);
 
-// problem delete request
+
+problemRouter.delete("/delete-problem/:slug", isAuthenticated, deleteProblem);
 
 export default problemRouter;
