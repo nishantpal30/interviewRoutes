@@ -4,6 +4,7 @@ import cors from "cors";
 import { serverConfig } from "./config/server.config.ts";
 import { connectDB } from "./config/db.config.ts";
 import authRouter from "./routers/auth.routers.js";
+import problemRouter from "./routers/problem.routers.js";
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(cookieParser());
 
 // routes
 app.use("/api/auth",authRouter);
+app.use("/api/problem", problemRouter);
 
 
 // middleware

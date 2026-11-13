@@ -16,14 +16,14 @@ export const problemCreationService = async (
     if (!["create", "update"].includes(submissionType)) {
       return {
         success: false,
-        statusCode: StatusCodes.EXPECTATION_FAILED,
+        statusCode: StatusCodes.BAD_REQUEST,
         message: 'submissionType must be "create" or "update".',
       };
     };
     if (!content || typeof content !== "object" || Array.isArray(content)) {
       return {
         success: false,
-        statusCode:StatusCodes.NOT_FOUND,
+        statusCode: StatusCodes.BAD_REQUEST,
         message: "Problem content is required.",
       };
     };
@@ -65,24 +65,31 @@ const validContent = validation.data;
       if (!problemId) {
         return {
           success: false,
-          statusCode:StatusCodes.NOT_IMPLEMENTED,
+          statusCode: StatusCodes.BAD_REQUEST,
           message: "problemId is required for an update.",
         };
       }
-    }
-const problemQuery = {
+      const problemQuery = {
         _id: problemId,
         isPublished: true,
-      }
-  if (!isAdmin) {
+      };
+      if (!isAdmin) {
         problemQuery.creatorPartnerId = userId;
       }
-const existingProblemCheck = await existingProblem(problemQuery)
-if(existingProblemCheck){
-  return existingProblemCheck
-};
 
-return await submissionProblem(submissionType,validContent,userId,isAdmin)
+      const existingProblemCheck = await existingProblem(problemQuery);
+      if (!existingProblemCheck.success) {
+        return existingProblemCheck;
+      }
+    }
+
+    return await submissionProblem(
+      submissionType,
+      validContent,
+      userId,
+      isAdmin,
+      submissionType === "update" ? problemId : null,
+    );
 
 
   
