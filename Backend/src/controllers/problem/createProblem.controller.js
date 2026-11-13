@@ -1,15 +1,30 @@
-import CreateProblemSubmission from "../../db/models/problem/createProblemSubmission.js";
+import { StatusCodes } from "http-status-codes";
 import { eligibleChecker } from "../../repositories/problem/eligibleChecker.js";
 import { problemCreationService } from "../../services/problem/problemCreation.service.js";
-export const 
-createProblem = async (req , res) =>{
-    const userId = req.userId;
-    const eligibleCheck = await eligibleChecker(userId);
-    if(!eligibleCheck.success){
-        return res.status(eligibleCheck.statusCode).json(eligibleCheck)
+
+export const createProblem = async (req, res) => {
+  try {
+    const eligibleCheck = await eligibleChecker(req.userId);
+    if (!eligibleCheck.success) {
+      return res.status(eligibleCheck.statusCode).json(eligibleCheck);
     }
 
-    const { submissionType, problemId, content } = req.body;
-    
-    const problemCreationResponse = await problemCreationService(submissionType,problemId,content,eligibleCheck.userId,eligibleCheck.isAdmin)
-}
+    const { submissionType, problemId, content } = req.body ?? {};
+    const response = await problemCreationService(
+      submissionType,
+      problemId,
+      content,
+      eligibleCheck.userId,
+      eligibleCheck.isAdmin,
+    );
+
+    return res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error("createProblem controller error:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Unable to submit the problem.",
+    });
+  }
+};
