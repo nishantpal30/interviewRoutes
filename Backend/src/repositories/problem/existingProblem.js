@@ -15,16 +15,8 @@ export const existingProblem = async (problemQuery) => {
     };
   }
 
-export const existingProblem = async (problemQuery)=>{
-    const existingProblemRecord = await Problem.findOne(problemQuery);
-
-      if (!existingProblemRecord) {
-        return{
-          success: false,
-          message: "Live problem not found or you cannot edit it.",
-          statusCode: StatusCodes.NOT_FOUND,
-        };
-      }
-
-      
-    }
+  return {
+    success: true,
+    problem,
+  };
+};
