@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { eligibleChecker } from "../../repositories/problem/eligibleChecker.js";
 import { problemCreationService } from "../../services/problem/problemCreation.service.js";
+import { problemByCreaterService } from "../../services/problem/problemByCreater.service.js";
 
 
 export const createProblem = async (req, res) => {
@@ -36,3 +37,18 @@ export const createProblem = async (req, res) => {
   }
 };
 
+export const problemByCreater = async (req, res) => {
+  try {
+    const response = await problemByCreaterService(req.userId);
+
+    return res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error("problemByCreater controller error:", error);
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Unable to retrieve your problems.",
+    });
+  }
+};

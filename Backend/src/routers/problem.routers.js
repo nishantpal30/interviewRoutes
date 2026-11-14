@@ -5,11 +5,11 @@ import {
   
 } from "../controllers/problem/createProblem.controller.js";
 import { deleteProblem } from "../controllers/problem/deleteProblem.controller.js";
-import { getAllProblems } from "../controllers/problem/getAllProblems.controller.js";
+import { problemByCreater } from "../controllers/problem/createProblem.controller.js";
 
 const problemRouter = express.Router();
 
-problemRouter.get("/", isAuthenticated, getAllProblems);
+problemRouter.get("/", isAuthenticated,problemByCreater);
 problemRouter.post("/create-problem", isAuthenticated, createProblem);
 problemRouter.patch("/update-problem/:slug", isAuthenticated, createProblem);
 
