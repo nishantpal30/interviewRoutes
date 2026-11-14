@@ -5,7 +5,7 @@ import { findProblemsByCreator } from "../../repositories/problem/findAllPublish
 export const problemByCreaterService = async (userId) => {
   try {
     const problems = await findProblemsByCreator(userId);
-
+console.log(`problem ${problems}`)
     return {
       success: true,
       statusCode: StatusCodes.OK,

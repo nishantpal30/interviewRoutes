@@ -1,3 +1,4 @@
+import CreateProblemSubmission from "../../db/models/problem/CreateProblemSubmission.js";
 import Problem from "../../db/models/problem/problem.js";
 
 const LIST_FIELDS = "title slug difficulty topics accessLevel createdAt";
@@ -15,11 +16,14 @@ export const findAllPublishedProblems = async () => {
 
 // Problems created by one user (for creator / admin dashboards).
 export const findProblemsByCreator = async (userId) => {
-  return Problem.find({
-    createdBy: userId,
+  return CreateProblemSubmission.find({
+    submittedBy: userId,
     isDeleted: { $ne: true },
   })
-    .select(`${LIST_FIELDS} isPublished`)
-    .sort({ title: 1, _id: 1 })
+    .select(
+      "submissionType problemId reviewStatus reviewMessage createdAt " +
+        "content.title content.slug content.difficulty content.topics content.accessLevel",
+    )
+    .sort({ createdAt: -1 })
     .lean();
 };
