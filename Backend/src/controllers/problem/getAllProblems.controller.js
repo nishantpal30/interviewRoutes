@@ -3,7 +3,7 @@ import { getAllProblemsService } from "../../services/problem/getAllProblems.ser
 
 export const getAllProblems = async (req, res) => {
   try {
-    const response = await getAllProblemsService(req.userId);
+    const response = await getAllProblemsService();
     return res.status(response.statusCode).json(response);
   } catch (error) {
     console.error("getAllProblems controller error:", error);

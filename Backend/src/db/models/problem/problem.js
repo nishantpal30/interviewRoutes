@@ -44,7 +44,6 @@ const problemSchema = new Schema(
       required: true,
       trim: true,
       lowercase: true,
-      unique: true,
     },
     description: {
       type: String,
@@ -153,6 +152,13 @@ const problemSchema = new Schema(
 );
 
 problemSchema.index({ isPublished: 1, accessLevel: 1, difficulty: 1 });
+
+// Slug must be unique only among live problems, so a soft-deleted
+// problem's slug can be reused.
+problemSchema.index(
+  { slug: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } },
+);
 
 const Problem = mongoose.model("Problem", problemSchema);
 

@@ -20,7 +20,10 @@ export const problemDeletionService = async (problemSlug, userId, isAdmin) => {
   }
 
   try {
-    const deletedProblem = await softDeleteProblem(problemSlug.trim(), userId);
+    const deletedProblem = await softDeleteProblem(
+      problemSlug.trim().toLowerCase(),
+      userId,
+    );
 
     if (!deletedProblem) {
       return {
