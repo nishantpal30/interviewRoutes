@@ -1,0 +1,258 @@
+From 955e3652a58fe8838bc037c232a0a790989cb2f1 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 11:30:19 +0000
+Subject: [PATCH] Fix problem module bugs (list route, slug handling, CORS,
+ startup)
+
+- GET /api/problem: service referenced undefined userId (ReferenceError -> 500);
+  now lists published, non-deleted problems for learners
+- Normalize slug (trim + lowercase) on update and delete
+- Reject duplicate slugs at submission time with 409 (new slugTaken repo)
+- Make slug uniqueness a partial index so soft-deleted slugs can be reused
+- Enable CORS with credentials; await DB connection before listen
+- Add Node engines field (>=22.18) since .ts files are imported directly
+- Make eligibleChecker "user not found" message generic
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01QahF3kqGxqBCo8Ufr4Hz8k
+---
+ Backend/package.json                          |  3 +++
+ .../problem/getAllProblems.controller.js      |  2 +-
+ Backend/src/db/models/problem/problem.js      |  8 ++++++-
+ .../repositories/problem/eligibleChecker.js   |  2 +-
+ .../problem/findAllPublishedProblems.js       | 15 +++++++++++-
+ Backend/src/repositories/problem/slugTaken.js | 11 +++++++++
+ Backend/src/server.js                         | 23 ++++++++++++++-----
+ .../problem/getAllProblems.service.js         |  4 ++--
+ .../problem/problemCreation.service.js        | 13 ++++++++++-
+ .../problem/problemDeletion.service.js        |  5 +++-
+ 10 files changed, 72 insertions(+), 14 deletions(-)
+ create mode 100644 Backend/src/repositories/problem/slugTaken.js
+
+diff --git a/Backend/package.json b/Backend/package.json
+index 0904d59..7998294 100644
+--- a/Backend/package.json
++++ b/Backend/package.json
+@@ -5,6 +5,9 @@
+   "license": "ISC",
+   "author": "",
+   "type": "module",
++  "engines": {
++    "node": ">=22.18"
++  },
+   "main": "server.js",
+   "scripts": {
+     "start": "node src/server.js",
+diff --git a/Backend/src/controllers/problem/getAllProblems.controller.js b/Backend/src/controllers/problem/getAllProblems.controller.js
+index c017bcd..2ab12fd 100644
+--- a/Backend/src/controllers/problem/getAllProblems.controller.js
++++ b/Backend/src/controllers/problem/getAllProblems.controller.js
+@@ -3,7 +3,7 @@ import { getAllProblemsService } from "../../services/problem/getAllProblems.ser
+ 
+ export const getAllProblems = async (req, res) => {
+   try {
+-    const response = await getAllProblemsService(req.userId);
++    const response = await getAllProblemsService();
+     return res.status(response.statusCode).json(response);
+   } catch (error) {
+     console.error("getAllProblems controller error:", error);
+diff --git a/Backend/src/db/models/problem/problem.js b/Backend/src/db/models/problem/problem.js
+index 306633f..6c47fb3 100644
+--- a/Backend/src/db/models/problem/problem.js
++++ b/Backend/src/db/models/problem/problem.js
+@@ -44,7 +44,6 @@ const problemSchema = new Schema(
+       required: true,
+       trim: true,
+       lowercase: true,
+-      unique: true,
+     },
+     description: {
+       type: String,
+@@ -154,6 +153,13 @@ const problemSchema = new Schema(
+ 
+ problemSchema.index({ isPublished: 1, accessLevel: 1, difficulty: 1 });
+ 
++// Slug must be unique only among live problems, so a soft-deleted
++// problem's slug can be reused.
++problemSchema.index(
++  { slug: 1 },
++  { unique: true, partialFilterExpression: { isDeleted: false } },
++);
++
+ const Problem = mongoose.model("Problem", problemSchema);
+ 
+ export default Problem;
+diff --git a/Backend/src/repositories/problem/eligibleChecker.js b/Backend/src/repositories/problem/eligibleChecker.js
+index 448cd03..82a86d3 100644
+--- a/Backend/src/repositories/problem/eligibleChecker.js
++++ b/Backend/src/repositories/problem/eligibleChecker.js
+@@ -12,7 +12,7 @@ export const eligibleChecker = async (userId) => {
+     if (!user) {
+       return {
+         success: false,
+-        message: "User not found to create problem!!",
++        message: "User not found.",
+         statusCode: StatusCodes.NOT_FOUND,
+       };
+     }
+diff --git a/Backend/src/repositories/problem/findAllPublishedProblems.js b/Backend/src/repositories/problem/findAllPublishedProblems.js
+index 484fa8c..0f82754 100644
+--- a/Backend/src/repositories/problem/findAllPublishedProblems.js
++++ b/Backend/src/repositories/problem/findAllPublishedProblems.js
+@@ -1,12 +1,25 @@
+ import Problem from "../../db/models/problem/problem.js";
+ 
++const LIST_FIELDS = "title slug difficulty topics accessLevel createdAt";
+ 
++// Problems visible to learners: published and not soft-deleted.
++export const findAllPublishedProblems = async () => {
++  return Problem.find({
++    isPublished: true,
++    isDeleted: { $ne: true },
++  })
++    .select(LIST_FIELDS)
++    .sort({ title: 1, _id: 1 })
++    .lean();
++};
++
++// Problems created by one user (for creator / admin dashboards).
+ export const findProblemsByCreator = async (userId) => {
+   return Problem.find({
+     createdBy: userId,
+     isDeleted: { $ne: true },
+   })
+-    .select("title slug difficulty topics accessLevel isPublished createdAt")
++    .select(`${LIST_FIELDS} isPublished`)
+     .sort({ title: 1, _id: 1 })
+     .lean();
+ };
+diff --git a/Backend/src/repositories/problem/slugTaken.js b/Backend/src/repositories/problem/slugTaken.js
+new file mode 100644
+index 0000000..a11ae47
+--- /dev/null
++++ b/Backend/src/repositories/problem/slugTaken.js
+@@ -0,0 +1,11 @@
++import Problem from "../../db/models/problem/problem.js";
++
++// True if another live (not soft-deleted) problem already uses this slug.
++// Pass excludeId when updating so a problem does not clash with itself.
++export const slugTaken = async (slug, excludeId = null) => {
++  const query = { slug, isDeleted: { $ne: true } };
++  if (excludeId) {
++    query._id = { $ne: excludeId };
++  }
++  return Boolean(await Problem.exists(query));
++};
+diff --git a/Backend/src/server.js b/Backend/src/server.js
+index a5351e4..e4c0a7d 100644
+--- a/Backend/src/server.js
++++ b/Backend/src/server.js
+@@ -8,17 +8,28 @@ import problemRouter from "./routers/problem.routers.js";
+ 
+ const app = express();
+ 
++// middleware
++app.use(
++  cors({
++    origin: process.env.CLIENT_URL || "http://localhost:5173",
++    credentials: true,
++  }),
++);
+ app.use(express.json());
+ app.use(cookieParser());
+ 
+ // routes
+-app.use("/api/auth",authRouter);
++app.use("/api/auth", authRouter);
+ app.use("/api/problem", problemRouter);
+ 
++const startServer = async () => {
++  // connectDB exits the process on failure, so the server only starts
++  // accepting requests once the database is connected.
++  await connectDB();
+ 
+-// middleware
+-app.listen(serverConfig.PORT, async ()=>{
++  app.listen(serverConfig.PORT, () => {
++    console.log(`Server Running Successfully at PORT ${serverConfig.PORT}`);
++  });
++};
+ 
+- console.log(`Server Running Sucessfully at PORT ${serverConfig.PORT}`);
+- connectDB();
+-});
++startServer();
+diff --git a/Backend/src/services/problem/getAllProblems.service.js b/Backend/src/services/problem/getAllProblems.service.js
+index f772413..cfaecb2 100644
+--- a/Backend/src/services/problem/getAllProblems.service.js
++++ b/Backend/src/services/problem/getAllProblems.service.js
+@@ -1,10 +1,10 @@
+ import mongoose from "mongoose";
+ import { StatusCodes } from "http-status-codes";
+-import {findProblemsByCreator } from "../../repositories/problem/findAllPublishedProblems.js";
++import { findAllPublishedProblems } from "../../repositories/problem/findAllPublishedProblems.js";
+ 
+ export const getAllProblemsService = async () => {
+   try {
+-    const problems = await findProblemsByCreator(userId);
++    const problems = await findAllPublishedProblems();
+ 
+     return {
+       success: true,
+diff --git a/Backend/src/services/problem/problemCreation.service.js b/Backend/src/services/problem/problemCreation.service.js
+index fe90483..93e5e4b 100644
+--- a/Backend/src/services/problem/problemCreation.service.js
++++ b/Backend/src/services/problem/problemCreation.service.js
+@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
+ import { problemContentSchema } from "../../validators/problem/problemContent.validator.ts";
+ import { existingProblem } from "../../repositories/problem/existingProblem.js";
+ import { submissionProblem } from "../../repositories/problem/submissionProblem.js";
++import { slugTaken } from "../../repositories/problem/slugTaken.js";
+ 
+ 
+ 
+@@ -71,7 +72,7 @@ const validContent = validation.data;
+         };
+       }
+       const problemQuery = {
+-        slug: problemSlug,
++        slug: problemSlug.trim().toLowerCase(),
+         isPublished: true,
+       };
+       if (!isAdmin) {
+@@ -86,6 +87,16 @@ const validContent = validation.data;
+       problemId = existingProblemCheck.problem._id;
+     }
+ 
++    // Reject a slug already used by another live problem (create, or a
++    // slug change on update) instead of failing later at approval time.
++    if (await slugTaken(validContent.slug, problemId)) {
++      return {
++        success: false,
++        statusCode: StatusCodes.CONFLICT,
++        message: "A problem with this slug already exists.",
++      };
++    }
++
+     return await submissionProblem(
+       submissionType,
+       validContent,
+diff --git a/Backend/src/services/problem/problemDeletion.service.js b/Backend/src/services/problem/problemDeletion.service.js
+index e58ef1d..bec1bd5 100644
+--- a/Backend/src/services/problem/problemDeletion.service.js
++++ b/Backend/src/services/problem/problemDeletion.service.js
+@@ -20,7 +20,10 @@ export const problemDeletionService = async (problemSlug, userId, isAdmin) => {
+   }
+ 
+   try {
+-    const deletedProblem = await softDeleteProblem(problemSlug.trim(), userId);
++    const deletedProblem = await softDeleteProblem(
++      problemSlug.trim().toLowerCase(),
++      userId,
++    );
+ 
+     if (!deletedProblem) {
+       return {
+-- 
+2.43.0
+
