@@ -1,9 +1,9 @@
 import { StatusCodes } from "http-status-codes";
 import { getAllProblemsService } from "../../services/problem/getAllProblems.service.js";
 
-export const getAllProblems = async (_req, res) => {
+export const getAllProblems = async (req, res) => {
   try {
-    const response = await getAllProblemsService();
+    const response = await getAllProblemsService(req.userId);
     return res.status(response.statusCode).json(response);
   } catch (error) {
     console.error("getAllProblems controller error:", error);

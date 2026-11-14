@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import { StatusCodes } from "http-status-codes";
-import { findAllPublishedProblems } from "../../repositories/problem/findAllPublishedProblems.js";
+import {findProblemsByCreator } from "../../repositories/problem/findAllPublishedProblems.js";
 
 export const getAllProblemsService = async () => {
   try {
-    const problems = await findAllPublishedProblems();
+    const problems = await findProblemsByCreator(userId);
 
     return {
       success: true,
