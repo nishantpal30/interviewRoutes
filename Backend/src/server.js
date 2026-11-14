@@ -8,17 +8,28 @@ import problemRouter from "./routers/problem.routers.js";
 
 const app = express();
 
+// middleware
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 
 // routes
-app.use("/api/auth",authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/problem", problemRouter);
 
+const startServer = async () => {
+  // connectDB exits the process on failure, so the server only starts
+  // accepting requests once the database is connected.
+  await connectDB();
 
-// middleware
-app.listen(serverConfig.PORT, async ()=>{
+  app.listen(serverConfig.PORT, () => {
+    console.log(`Server Running Successfully at PORT ${serverConfig.PORT}`);
+  });
+};
 
- console.log(`Server Running Sucessfully at PORT ${serverConfig.PORT}`);
- connectDB();
-});
+startServer();

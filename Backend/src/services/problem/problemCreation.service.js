@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { problemContentSchema } from "../../validators/problem/problemContent.validator.ts";
 import { existingProblem } from "../../repositories/problem/existingProblem.js";
 import { submissionProblem } from "../../repositories/problem/submissionProblem.js";
+import { slugTaken } from "../../repositories/problem/slugTaken.js";
 
 
 
@@ -71,7 +72,7 @@ const validContent = validation.data;
         };
       }
       const problemQuery = {
-        slug: problemSlug,
+        slug: problemSlug.trim().toLowerCase(),
         isPublished: true,
       };
       if (!isAdmin) {
@@ -84,6 +85,16 @@ const validContent = validation.data;
       }
 
       problemId = existingProblemCheck.problem._id;
+    }
+
+    // Reject a slug already used by another live problem (create, or a
+    // slug change on update) instead of failing later at approval time.
+    if (await slugTaken(validContent.slug, problemId)) {
+      return {
+        success: false,
+        statusCode: StatusCodes.CONFLICT,
+        message: "A problem with this slug already exists.",
+      };
     }
 
     return await submissionProblem(

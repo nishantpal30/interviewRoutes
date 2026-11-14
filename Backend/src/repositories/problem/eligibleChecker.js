@@ -12,7 +12,7 @@ export const eligibleChecker = async (userId) => {
     if (!user) {
       return {
         success: false,
-        message: "User not found to create problem!!",
+        message: "User not found.",
         statusCode: StatusCodes.NOT_FOUND,
       };
     }
